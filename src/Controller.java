@@ -1,4 +1,3 @@
-// Controller.java
 public class Controller {
     private Model model;
 
@@ -7,12 +6,13 @@ public class Controller {
     }
 
     public void onButtonClick(int row, int col) {
-        model.playMove(row, col);
+        if (!model.isGameOver()) {
+            model.playMove(row, col);
+        }
     }
 
     public void onResetClick() {
         model.resetModel();
-        model.registerView(model.getView());
     }
 
     public void setAiDifficulty(int difficulty) {

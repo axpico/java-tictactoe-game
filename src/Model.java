@@ -15,12 +15,12 @@ public class Model {
         resetModel();
     }
 
-    public View getView() {
-        return view;
-    }
-
     public void registerView(View view) {
         this.view = view;
+    }
+
+    public View getView() {
+        return view;
     }
 
     public void resetModel() {
@@ -34,6 +34,11 @@ public class Model {
             for (int j = 0; j < 3; j++) {
                 board[i][j] = ' ';
             }
+        }
+
+        // Update view if it exists
+        if (view != null) {
+            view.resetGame();
         }
     }
 
