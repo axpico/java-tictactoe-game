@@ -1,51 +1,69 @@
 import javax.swing.*;
 
-// Model.java
+/**
+ * Represents the model for a Tic-Tac-Toe game, including game logic and AI functionality.
+ */
 public class Model {
     private View view;
     private int currentPlayer; // 1 for X, 2 for O
     private int movesCount;
-    private char[][] board;
+    private final char[][] board;
     private String message;
     private boolean gameOver;
     private int aiDifficulty; // 0: No AI, 1: Easy, 2: Medium, 3: Hard
 
+    /**
+     * Initializes the model and resets the game state.
+     */
     public Model() {
         board = new char[3][3];
         resetModel();
     }
 
+    /**
+     * Registers the view associated with this model.
+     *
+     * @param view The view to be registered.
+     */
     public void registerView(View view) {
         this.view = view;
     }
 
-    public View getView() {
-        return view;
-    }
-
+    /**
+     * Resets the game state to its initial configuration.
+     */
     public void resetModel() {
-        currentPlayer = 1; // X starts
+        currentPlayer = 1;
         movesCount = 0;
         gameOver = false;
         message = "Player X's turn";
 
-        // Initialize empty board
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 board[i][j] = ' ';
             }
         }
 
-        // Update view if it exists
         if (view != null) {
             view.resetGame();
         }
     }
 
+    /**
+     * Sets the difficulty level of the AI.
+     *
+     * @param difficulty The difficulty level (0: No AI, 1: Easy, 2: Medium, 3: Hard).
+     */
     public void setAiDifficulty(int difficulty) {
         this.aiDifficulty = difficulty;
     }
 
+    /**
+     * Processes a player's move and updates the game state accordingly.
+     *
+     * @param row The row index of the move.
+     * @param col The column index of the move.
+     */
     public void playMove(int row, int col) {
         if (gameOver || row < 0 || row >= 3 || col < 0 || col >= 3 || board[row][col] != ' ') {
             return;
@@ -71,31 +89,27 @@ public class Model {
             message = "Player " + symbol + "'s turn";
             view.updateMessage(message);
 
-            // If AI's turn and game not over
             if (currentPlayer == 2 && aiDifficulty > 0 && !gameOver) {
                 makeAiMove();
             }
         }
     }
 
+    /**
+     * Executes an AI move based on the set difficulty level.
+     */
     private void makeAiMove() {
-        // Delay AI move slightly for better UX
         new Thread(() -> {
             try {
                 Thread.sleep(500);
                 int[] move = new int[2];
 
-                switch (aiDifficulty) {
-                    case 1: // Easy - Random move
-                        move = makeRandomMove();
-                        break;
-                    case 2: // Medium - Can block and win
-                        move = makeMediumMove();
-                        break;
-                    case 3: // Hard - Optimal play
-                        move = makeHardMove();
-                        break;
-                }
+                move = switch (aiDifficulty) {
+                    case 1 -> makeRandomMove();
+                    case 2 -> makeMediumMove();
+                    case 3 -> makeHardMove();
+                    default -> move;
+                };
 
                 if (move != null) {
                     final int row = move[0];
@@ -109,6 +123,11 @@ public class Model {
         }).start();
     }
 
+    /**
+     * Generates a random valid move for the AI.
+     *
+     * @return An array containing the row and column indices of the move.
+     */
     private int[] makeRandomMove() {
         java.util.List<int[]> availableMoves = new java.util.ArrayList<>();
 
@@ -128,8 +147,12 @@ public class Model {
         return availableMoves.get(randomIndex);
     }
 
+    /**
+     * Generates a medium-difficulty move for the AI by blocking or winning when possible.
+     *
+     * @return An array containing the row and column indices of the move.
+     */
     private int[] makeMediumMove() {
-        // First check if AI can win
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j] == ' ') {
@@ -143,7 +166,6 @@ public class Model {
             }
         }
 
-        // Then check if player can win and block
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j] == ' ') {
@@ -157,16 +179,26 @@ public class Model {
             }
         }
 
-        // Otherwise make a random move
         return makeRandomMove();
     }
 
+    /**
+     * Generates a hard-difficulty move using optimal play strategies such as minimax.
+     *
+     * @return An array containing the row and column indices of the move.
+     */
     private int[] makeHardMove() {
-        // Implementation of minimax algorithm for optimal play
         int[] bestMove = minimax(2, 'O');
         return new int[]{bestMove[1], bestMove[2]};
     }
 
+    /**
+     * Implements the minimax algorithm to determine optimal moves.
+     *
+     * @param depth The depth of recursion for evaluating moves.
+     * @param player The current player ('X' or 'O').
+     * @return An array containing score and indices of the best move.
+     */
     private int[] minimax(int depth, char player) {
         int[] best = new int[]{(player == 'O') ? Integer.MIN_VALUE : Integer.MAX_VALUE, -1, -1};
 
@@ -205,109 +237,82 @@ public class Model {
         return best;
     }
 
-    private int evaluateBoard() {
-        // Check rows, columns, and diagonals for winner
-        for (int i = 0; i < 3; i++) {
-            // Check rows
-            if (board[i][0] == board[i][1] && board[i][1] == board[i][2]) {
-                if (board[i][0] == 'O') return 10;
-                else if (board[i][0] == 'X') return -10;
-            }
-
-            // Check columns
-            if (board[0][i] == board[1][i] && board[1][i] == board[2][i]) {
-                if (board[0][i] == 'O') return 10;
-                else if (board[0][i] == 'X') return -10;
-            }
-        }
-
-        // Check diagonals
-        if (board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
-            if (board[0][0] == 'O') return 10;
-            else if (board[0][0] == 'X') return -10;
-        }
-
-        if (board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
-            if (board[0][2] == 'O') return 10;
-            else if (board[0][2] == 'X') return -10;
-        }
-
-        return 0; // No winner
-    }
-
+    /**
+     * Checks if the game is over, either by a win or a tie.
+     *
+     * @return True if the game is over, false otherwise.
+     */
     private boolean checkGameOver() {
-        // Check if game is over (win or tie)
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (board[i][j] != ' ' && checkWinner(i, j)) {
-                    return true;
-                }
-            }
-        }
-
-        // Check for tie
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (board[i][j] == ' ') {
-                    return false; // Game still in progress
-                }
-            }
-        }
-
-        return true; // Tie
+        return gameOver || movesCount == 9;
     }
 
-    public boolean checkWinner(int row, int col) {
+    /**
+     * Checks if the current move results in a win for the current player.
+     *
+     * @param row The row index of the last move.
+     * @param col The column index of the last move.
+     * @return True if the current player wins, false otherwise.
+     */
+    private boolean checkWinner(int row, int col) {
         char symbol = board[row][col];
-        if (symbol == ' ') return false;
 
         // Check row
-        boolean win = true;
-        for (int j = 0; j < 3; j++) {
-            if (board[row][j] != symbol) {
-                win = false;
-                break;
-            }
+        if (board[row][0] == symbol && board[row][1] == symbol && board[row][2] == symbol) {
+            return true;
         }
-        if (win) return true;
 
         // Check column
-        win = true;
+        if (board[0][col] == symbol && board[1][col] == symbol && board[2][col] == symbol) {
+            return true;
+        }
+
+        // Check main diagonal
+        if (row == col && board[0][0] == symbol && board[1][1] == symbol && board[2][2] == symbol) {
+            return true;
+        }
+
+        // Check anti-diagonal
+        return row + col == 2 && board[0][2] == symbol && board[1][1] == symbol && board[2][0] == symbol;
+    }
+
+    /**
+     * Evaluates the current state of the board to calculate a score for minimax.
+     *
+     * @return A score representing how favorable the board is for the AI player.
+     */
+    private int evaluateBoard() {
         for (int i = 0; i < 3; i++) {
-            if (board[i][col] != symbol) {
-                win = false;
-                break;
+            // Check rows for a win
+            if (board[i][0] != ' ' && board[i][0] == board[i][1] && board[i][1] == board[i][2]) {
+                return (board[i][0] == 'O') ? 10 : -10;
+            }
+            // Check columns for a win
+            if (board[0][i] != ' ' && board[0][i] == board[1][i] && board[1][i] == board[2][i]) {
+                return (board[0][i] == 'O') ? 10 : -10;
             }
         }
-        if (win) return true;
 
-        // Check diagonals
-        if (row == col) {
-            win = true;
-            for (int i = 0; i < 3; i++) {
-                if (board[i][i] != symbol) {
-                    win = false;
-                    break;
-                }
-            }
-            if (win) return true;
+        // Check main diagonal for a win
+        if (board[0][0] != ' ' && board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
+            return (board[0][0] == 'O') ? 10 : -10;
         }
 
-        if (row + col == 2) {
-            win = true;
-            for (int i = 0; i < 3; i++) {
-                if (board[i][2-i] != symbol) {
-                    win = false;
-                    break;
-                }
-            }
-            if (win) return true;
+        // Check anti-diagonal for a win
+        if (board[0][2] != ' ' && board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
+            return (board[0][2] == 'O') ? 10 : -10;
         }
 
-        return false;
+        // If no winner, return 0
+        return 0;
     }
 
+    /**
+     * Returns whether the game has ended or not.
+     *
+     * @return True if the game is over, false otherwise.
+     */
     public boolean isGameOver() {
-        return gameOver;
+        return this.gameOver;
     }
+
 }
